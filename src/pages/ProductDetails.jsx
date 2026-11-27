@@ -26,7 +26,11 @@ import {
   formatRwf,
   formatRelativeDate,
 } from "../services/marketService.js";
-import { POPULAR_CROPS, findCropMeta } from "../data/featuredCrops.js";
+import {
+  fetchProducts,
+  getProductsSync,
+  findProductBySlugOrName,
+} from "../services/productService.js";
 
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1542838132-92c53300491e?w=900&auto=format&fit=crop&q=85";
@@ -35,7 +39,8 @@ function ProductDetails() {
   const { slug } = useParams();
   const { user, profile, toggleWatchlistCrop } = useAuth();
   const decodedSlug = decodeURIComponent(slug || "");
-  const meta = findCropMeta(decodedSlug);
+  const [catalog, setCatalog] = useState(() => getProductsSync());
+  const meta = findProductBySlugOrName(decodedSlug, catalog);
 
   const [prices, setPrices] = useState([]);
   const [districts, setDistricts] = useState([]);
@@ -49,9 +54,12 @@ function ProductDetails() {
   }, [slug]);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     let active = true;
+    fetchProducts().then((list) => {
+      if (active) setCatalog(list);
+    });
+
+    if (!isSupabaseConfigured) return () => { active = false; };
     fetchMarketData()
       .then(({ prices: raw, districts: dists }) => {
         if (!active) return;
@@ -134,10 +142,9 @@ function ProductDetails() {
   const qty = Math.max(0, Number(quantityKg) || 0);
   const estimatedValue = Math.round(estimatorUnitPrice * qty);
 
-  const relatedCrops = POPULAR_CROPS.filter((c) => c.slug !== meta?.slug).slice(
-    0,
-    3
-  );
+  const relatedCrops = catalog
+    .filter((c) => c.slug !== meta?.slug)
+    .slice(0, 3);
 
   const isWatched = profile.watchlist.some(
     (w) => w.toLowerCase() === displayName.toLowerCase()

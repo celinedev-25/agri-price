@@ -22,17 +22,23 @@ import {
   formatRwf,
   formatRelativeDate,
 } from "../services/marketService.js";
-import { POPULAR_CROPS, slugifyCrop } from "../data/featuredCrops.js";
+import { slugifyCrop } from "../data/featuredCrops.js";
+import { fetchProducts, getProductsSync } from "../services/productService.js";
 
 function Home() {
   const [livePrices, setLivePrices] = useState([]);
   const [districts, setDistricts] = useState([]);
+  const [products, setProducts] = useState(() => getProductsSync());
   const [loadingLive, setLoadingLive] = useState(isSupabaseConfigured);
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
-
     let active = true;
+    fetchProducts().then((list) => {
+      if (active) setProducts(list);
+    });
+
+    if (!isSupabaseConfigured) return () => { active = false; };
+
     fetchMarketData()
       .then(({ prices, districts: dists }) => {
         if (!active) return;
@@ -292,7 +298,7 @@ function Home() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
-          {POPULAR_CROPS.map((crop) => {
+          {products.map((crop) => {
             const { price, isLive } = getCropLivePrice(crop);
 
             return (

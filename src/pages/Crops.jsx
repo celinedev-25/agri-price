@@ -23,7 +23,8 @@ import {
   formatRwf,
   formatRelativeDate,
 } from "../services/marketService.js";
-import { findCropMeta, slugifyCrop } from "../data/featuredCrops.js";
+import { slugifyCrop } from "../data/featuredCrops.js";
+import { findProductBySlugOrName } from "../services/productService.js";
 
 function Crops() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -363,7 +364,7 @@ function Crops() {
             {displayList.map((item) => {
               const districtName = getDistrictName(districts, item.district_id);
               const province = getDistrictProvince(districts, item.district_id);
-              const meta = findCropMeta(item.crop_name);
+              const meta = findProductBySlugOrName(item.crop_name);
               const productSlug = meta?.slug || slugifyCrop(item.crop_name);
 
               return (

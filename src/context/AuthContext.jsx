@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import supabase, { isSupabaseConfigured } from "../supabase.js";
+import { isEmailInAdminTeam } from "../services/adminService.js";
 
 const AuthContext = createContext(null);
 
@@ -116,8 +117,9 @@ export function AuthProvider({ children }) {
     return updateProfile({ watchlist: next });
   };
 
-  const role = user?.user_metadata?.role || "farmer";
-  const isAdmin = role === "admin";
+  const isAdmin =
+    user?.user_metadata?.role === "admin" || isEmailInAdminTeam(user?.email);
+  const role = isAdmin ? "admin" : user?.user_metadata?.role || "farmer";
   const profile = {
     fullName:
       user?.user_metadata?.full_name ||

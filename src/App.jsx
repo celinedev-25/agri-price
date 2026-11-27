@@ -1,9 +1,11 @@
-import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Link, Outlet } from "react-router-dom";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
+import AdminLayout from "./components/admin/AdminLayout.jsx";
+
 import Home from "./pages/Home.jsx";
 import Crops from "./pages/Crops.jsx";
 import ProductDetails from "./pages/ProductDetails.jsx";
@@ -14,7 +16,23 @@ import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import Profile from "./pages/Profile.jsx";
 import UserDashboard from "./pages/UserDashboard.jsx";
-import Admin from "./pages/Admin.jsx";
+
+import AdminOverview from "./pages/admin/AdminOverview.jsx";
+import AdminPrices from "./pages/admin/AdminPrices.jsx";
+import AdminProducts from "./pages/admin/AdminProducts.jsx";
+import AdminTeam from "./pages/admin/AdminTeam.jsx";
+
+function PublicLayout() {
+  return (
+    <div className="min-h-screen flex flex-col bg-[#f8faf7]">
+      <Navbar />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+}
 
 function NotFound() {
   return (
@@ -42,47 +60,51 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen flex flex-col bg-[#f8faf7]">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/crops" element={<Crops />} />
-              <Route path="/product/:slug" element={<ProductDetails />} />
-              <Route path="/prices" element={<Prices />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <UserDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <Admin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <Routes>
+          {/* Public & User Routes */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/crops" element={<Crops />} />
+            <Route path="/product/:slug" element={<ProductDetails />} />
+            <Route path="/prices" element={<Prices />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+
+          {/* Nested Admin Workspace with Sidebar + Outlet */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<AdminOverview />} />
+            <Route path="prices" element={<AdminPrices />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="team" element={<AdminTeam />} />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   );
