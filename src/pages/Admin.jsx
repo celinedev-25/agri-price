@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import supabase from "../supabase.js";
 
 function Admin() {
   const [districts, setDistricts] = useState([]);
@@ -10,25 +11,18 @@ function Admin() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Get all districts from Supabase through backend
+  // Load districts directly from Supabase
   useEffect(() => {
     const getDistricts = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:5000/api/districts"
-        );
+        const { data, error } = await supabase
+          .from("districts")
+          .select("*")
+          .order("id");
 
-        const result = await response.json();
+        if (error) throw error;
 
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to load districts");
-        }
-
-        const districtList = Array.isArray(result)
-          ? result
-          : result.data || [];
-
-        setDistricts(districtList);
+        setDistricts(data || []);
       } catch (error) {
         setMessage("District error: " + error.message);
       } finally {
@@ -39,7 +33,7 @@ function Admin() {
     getDistricts();
   }, []);
 
-  // Save crop price
+  // Save price directly to Supabase
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -52,32 +46,24 @@ function Admin() {
     try {
       setSaving(true);
 
-      const response = await fetch(
-        "http://localhost:5000/api/prices",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+      const { error } = await supabase
+        .from("market_price")
+        .insert([
+          {
             crop_name: cropName.trim(),
             district_id: Number(districtId),
             price: Number(price),
-          }),
-        }
-      );
+          },
+        ]);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to save price");
-      }
+      if (error) throw error;
 
       setMessage("Price saved successfully!");
 
       setCropName("");
       setDistrictId("");
       setPrice("");
+
     } catch (error) {
       setMessage("Error: " + error.message);
     } finally {
@@ -99,7 +85,6 @@ function Admin() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
 
-          {/* Crop name */}
           <div>
             <label className="block font-semibold mb-2">
               Crop Name
@@ -110,35 +95,34 @@ function Admin() {
               value={cropName}
               onChange={(e) => setCropName(e.target.value)}
               placeholder="Example: Ibirayi"
-              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-green-500"
+              className="w-full border border-gray-300 rounded-lg p-3"
               required
             />
           </div>
 
-          {/* District */}
           <div>
             <label className="block font-semibold mb-2">
               Select District
             </label>
 
             {loading ? (
-              <p className="text-gray-500">Loading districts...</p>
+              <p>Loading districts...</p>
             ) : districts.length === 0 ? (
               <p className="text-red-600">
-                No districts found. Check your Supabase districts table.
+                No districts found.
               </p>
             ) : (
               <select
                 value={districtId}
                 onChange={(e) => setDistrictId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full border border-gray-300 rounded-lg p-3 bg-white"
                 required
               >
-                <option value="">Choose a district</option>
+                <option value="">Choose district</option>
 
                 {districts.map((district) => (
                   <option key={district.id} value={district.id}>
-                    {district.market || district.name || district.district}
+                    {district.market}
                     {district.province
                       ? ` - ${district.province}`
                       : ""}
@@ -148,7 +132,6 @@ function Admin() {
             )}
           </div>
 
-          {/* Price */}
           <div>
             <label className="block font-semibold mb-2">
               Price (RWF)
@@ -160,17 +143,16 @@ function Admin() {
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              placeholder="Enter price in RWF"
-              className="w-full border border-gray-300 rounded-lg p-3 outline-none focus:ring-2 focus:ring-green-500"
+              placeholder="Enter price"
+              className="w-full border border-gray-300 rounded-lg p-3"
               required
             />
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
             disabled={saving || loading || districts.length === 0}
-            className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-bold p-3 rounded-lg transition"
+            className="w-full bg-green-700 hover:bg-green-800 disabled:bg-gray-400 text-white font-bold p-3 rounded-lg"
           >
             {saving ? "Saving..." : "Save Price"}
           </button>

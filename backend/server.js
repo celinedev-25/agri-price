@@ -2,7 +2,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import supabase from "./supabase.js";
+import supabase from "../src/supabase.js";
 
 dotenv.config();
 

@@ -1,5 +1,6 @@
 
 import { useEffect, useState } from "react";
+import supabase from "../supabase.js";
 
 function Crops() {
   const [prices, setPrices] = useState([]);
@@ -9,27 +10,28 @@ function Crops() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Load prices and districts directly from Supabase
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [priceResponse, districtResponse] = await Promise.all([
-          fetch("http://localhost:5000/api/prices"),
-          fetch("http://localhost:5000/api/districts")
+        const [priceResult, districtResult] = await Promise.all([
+          supabase
+            .from("market_price")
+            .select("*")
+            .order("created_at", { ascending: false }),
+
+          supabase
+            .from("districts")
+            .select("*")
+            .order("id")
         ]);
 
-        const priceResult = await priceResponse.json();
-        const districtResult = await districtResponse.json();
-
-        if (!priceResponse.ok) {
-          throw new Error("Failed to load prices");
-        }
-
-        if (!districtResponse.ok) {
-          throw new Error("Failed to load districts");
-        }
+        if (priceResult.error) throw priceResult.error;
+        if (districtResult.error) throw districtResult.error;
 
         setPrices(priceResult.data || []);
         setDistricts(districtResult.data || []);
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -40,7 +42,7 @@ function Crops() {
     loadData();
   }, []);
 
-  // Find the district name using district_id
+  // Find district name
   const getDistrictName = (id) => {
     const district = districts.find(
       (item) => String(item.id) === String(id)
@@ -49,12 +51,13 @@ function Crops() {
     return district?.market || district?.name || "Unknown district";
   };
 
-  // Compare each price with the previous price for the same crop and district
+  // Compare current price with previous price
   const getPriceChange = (current) => {
     const history = prices
       .filter(
         (item) =>
-          item.crop_name.toLowerCase() === current.crop_name.toLowerCase() &&
+          item.crop_name?.toLowerCase() ===
+            current.crop_name?.toLowerCase() &&
           String(item.district_id) === String(current.district_id)
       )
       .sort(
@@ -70,7 +73,8 @@ function Crops() {
 
     if (!previous) return null;
 
-    const difference = Number(current.price) - Number(previous.price);
+    const difference =
+      Number(current.price) - Number(previous.price);
 
     if (difference > 0) return "up";
     if (difference < 0) return "down";
@@ -78,10 +82,11 @@ function Crops() {
     return "same";
   };
 
+  // Search and filter prices
   const filteredPrices = prices
     .filter((item) => {
       const matchesSearch = item.crop_name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(search.toLowerCase());
 
       const matchesDistrict =
@@ -145,15 +150,18 @@ function Crops() {
         </div>
 
         {error && (
-          <p className="text-red-600 text-center mb-5">{error}</p>
+          <p className="text-red-600 text-center mb-5">
+            {error}
+          </p>
         )}
 
-        {/* Prices */}
+        {/* Display crop prices */}
         {filteredPrices.length === 0 ? (
           <div className="bg-white rounded-xl p-10 text-center shadow">
             <h2 className="text-xl font-semibold text-gray-700">
               No crop prices found
             </h2>
+
             <p className="text-gray-500 mt-2">
               Add prices from the Admin page first.
             </p>
