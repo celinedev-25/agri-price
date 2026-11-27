@@ -1,16 +1,33 @@
-# React + Vite
+# AgriPrice Rwanda
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Direct frontend-to-Supabase agricultural market price platform for Rwanda. Built with React 19, Vite, Tailwind CSS v4, and `@supabase/supabase-js` — no external backend server required.
 
-Currently, two official plugins are available:
+## Features
+- **Live Crop Prices (`/crops`)**: Search, filter by district, sort by price/date/name, automatic price-trend tracking (`up`, `down`, `steady`), and chronological price history modal.
+- **Harvest Calculator & Market Comparison (`/prices`)**: Estimate harvest revenue in RWF, compare prices across districts side-by-side, and spot higher-paying markets.
+- **Admin Portal (`/admin`)**: Full CRUD (Add, Edit, Delete) for `market_price` entries directly in Supabase with crop suggestions and instant table filtering.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Supabase Setup (Frontend Direct Connection)
 
-## React Compiler
+1. Copy `.env.example` to `.env.local` (already created locally):
+   ```env
+   VITE_SUPABASE_URL=https://your-project-id.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-publishable-or-anon-key
+   ```
+   > **Important:** Always use your **Publishable / Anon key** from *Supabase Dashboard → Project Settings → API*. Never put a `service_role` / `sb_secret_` key in frontend code.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. Ensure your Supabase project has the `districts` and `market_price` tables and appropriate Row Level Security (RLS) policies enabled for `anon` (or authenticated admin users) to `SELECT`, `INSERT`, `UPDATE`, and `DELETE`.
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## Production Build
+
+```bash
+npm run build
+npm run preview
+```
