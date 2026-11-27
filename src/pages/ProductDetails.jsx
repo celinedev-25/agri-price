@@ -13,7 +13,10 @@ import {
   Scale,
   Sprout,
   Clock,
+  Bookmark,
+  BookmarkCheck,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
 import { isSupabaseConfigured } from "../supabase.js";
 import {
   fetchMarketData,
@@ -30,6 +33,7 @@ const DEFAULT_IMAGE =
 
 function ProductDetails() {
   const { slug } = useParams();
+  const { user, profile, toggleWatchlistCrop } = useAuth();
   const decodedSlug = decodeURIComponent(slug || "");
   const meta = findCropMeta(decodedSlug);
 
@@ -38,6 +42,7 @@ function ProductDetails() {
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [quantityKg, setQuantityKg] = useState("100");
   const [selectedDistrictId, setSelectedDistrictId] = useState("");
+  const [togglingWatch, setTogglingWatch] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -134,6 +139,20 @@ function ProductDetails() {
     3
   );
 
+  const isWatched = profile.watchlist.some(
+    (w) => w.toLowerCase() === displayName.toLowerCase()
+  );
+
+  const handleToggleWatch = async () => {
+    if (!user) return;
+    try {
+      setTogglingWatch(true);
+      await toggleWatchlistCrop(displayName);
+    } finally {
+      setTogglingWatch(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#f8faf7] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -177,14 +196,41 @@ function ProductDetails() {
             {/* Info Column */}
             <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
               <div>
-                <div className="flex flex-wrap items-baseline gap-3">
-                  <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-                    {displayName}
-                  </h1>
-                  {meta?.kinya && (
-                    <span className="text-lg font-bold text-emerald-700">
-                      ({meta.kinya})
-                    </span>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-baseline gap-3">
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
+                      {displayName}
+                    </h1>
+                    {meta?.kinya && (
+                      <span className="text-lg font-bold text-emerald-700">
+                        ({meta.kinya})
+                      </span>
+                    )}
+                  </div>
+
+                  {user && (
+                    <button
+                      type="button"
+                      disabled={togglingWatch}
+                      onClick={handleToggleWatch}
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
+                        isWatched
+                          ? "bg-emerald-900 text-white border-emerald-900"
+                          : "bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-50"
+                      }`}
+                    >
+                      {isWatched ? (
+                        <>
+                          <BookmarkCheck className="w-4 h-4 text-amber-300" />
+                          Saved in Watchlist
+                        </>
+                      ) : (
+                        <>
+                          <Bookmark className="w-4 h-4" />
+                          Save to Watchlist
+                        </>
+                      )}
+                    </button>
                   )}
                 </div>
 
